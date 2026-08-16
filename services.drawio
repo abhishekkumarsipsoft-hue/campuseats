@@ -1,0 +1,83 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="2FRKJ-OxfFkOHYgJgO3J">
+    <mxGraphModel dx="1030" dy="567" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="C2hWuR2dix22Joiq-cs7-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="ACCOUNT&lt;div&gt;OWNS:users, addresses, login&lt;/div&gt;&lt;div&gt;MEMBER:ABHISHEK KUMAR&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="230" x="30" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="CATALOGUE&lt;div&gt;OWNS:&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;vendors, menus, prices&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;MEMBER:BINAMRA RANA&lt;/span&gt;&lt;/div&gt;&lt;strong&gt;&lt;/strong&gt;" vertex="1">
+          <mxGeometry height="60" width="270" x="230" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PAYMENTS&lt;div&gt;OWNS:&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;transactions&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;MEMBER:SHRUTI SINGH&lt;/span&gt;&lt;/div&gt;&lt;strong&gt;&lt;/strong&gt;" vertex="1">
+          <mxGeometry height="60" width="200" x="470" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="ORDERS&lt;div&gt;OWNS:carts, orders, status&lt;/div&gt;&lt;div&gt;MEMBER:NAVENDU PANDEY&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="230" x="280" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="DELIVERY&lt;div&gt;OWNS:&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;riders, assignments&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;MEMBER:YATINDRA KUMAR YUNISH&lt;/span&gt;&lt;/div&gt;&lt;strong&gt;&lt;/strong&gt;" vertex="1">
+          <mxGeometry height="60" width="290" x="250" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="NOTIFICATION&lt;div&gt;OWNS:message log&lt;br&gt;&lt;div&gt;MEMBER:NAVENDU PANDEY ,&amp;nbsp;&lt;/div&gt;&lt;div&gt;YATINDRA KUMAR YUNISH&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="260" x="280" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-7" edge="1" parent="1" source="C2hWuR2dix22Joiq-cs7-4" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="C2hWuR2dix22Joiq-cs7-2" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="370" y="250" as="sourcePoint" />
+            <mxPoint x="370" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-15" connectable="0" parent="C2hWuR2dix22Joiq-cs7-7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="checkItem" vertex="1">
+          <mxGeometry relative="1" x="0.1703" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-8" edge="1" parent="1" source="C2hWuR2dix22Joiq-cs7-1" style="endArrow=classic;html=1;rounded=0;exitX=0.667;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="C2hWuR2dix22Joiq-cs7-4" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="220" y="260" as="sourcePoint" />
+            <mxPoint x="300" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-16" connectable="0" parent="C2hWuR2dix22Joiq-cs7-8" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="getAddress" vertex="1">
+          <mxGeometry relative="1" x="-0.3407" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-9" edge="1" parent="1" source="C2hWuR2dix22Joiq-cs7-3" style="endArrow=classic;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.387;exitY=1.053;exitDx=0;exitDy=0;exitPerimeter=0;" target="C2hWuR2dix22Joiq-cs7-4" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="510" y="260" as="sourcePoint" />
+            <mxPoint x="450" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-17" connectable="0" parent="C2hWuR2dix22Joiq-cs7-9" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="charge" vertex="1">
+          <mxGeometry relative="1" x="-0.449" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-10" edge="1" parent="1" source="C2hWuR2dix22Joiq-cs7-4" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="C2hWuR2dix22Joiq-cs7-5" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="400" y="320" as="sourcePoint" />
+            <mxPoint x="370" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-18" connectable="0" parent="C2hWuR2dix22Joiq-cs7-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="assignRider" vertex="1">
+          <mxGeometry relative="1" x="-0.2733" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-11" edge="1" parent="1" source="C2hWuR2dix22Joiq-cs7-5" style="endArrow=classic;html=1;rounded=0;entryX=0.583;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="C2hWuR2dix22Joiq-cs7-6" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="400" y="320" as="sourcePoint" />
+            <mxPoint x="450" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2hWuR2dix22Joiq-cs7-19" connectable="0" parent="C2hWuR2dix22Joiq-cs7-11" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="send" vertex="1">
+          <mxGeometry relative="1" x="-0.0329" y="-4" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
