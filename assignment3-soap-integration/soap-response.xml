@@ -1,0 +1,25 @@
+ <?xml version="1.0" encoding="UTF-8"?> 
+
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+
+               xmlns:tns="http://paysecure.example.com/ws"> 
+
+  
+
+  <soap:Body> 
+
+    <tns:chargeResponse> 
+
+      <transactionId>TXN-987654321</transactionId> 
+
+      <status>SUCCESS</status> 
+
+      <message>Payment of 450.00 INR charged successfully</message> 
+
+    </tns:chargeResponse> 
+
+  </soap:Body> 
+
+  
+
+</soap:Envelope> 

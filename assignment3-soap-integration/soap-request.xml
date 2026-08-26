@@ -1,0 +1,49 @@
+  <?xml version="1.0" encoding="UTF-8"?> 
+
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+
+               xmlns:tns="http://paysecure.example.com/ws"> 
+
+  
+
+  <!-- Header me credentials --> 
+
+  <soap:Header> 
+
+    <tns:AuthHeader> 
+
+      <Username>campuseats_user</Username> 
+
+      <Password>securePass@123</Password> 
+
+    </tns:AuthHeader> 
+
+  </soap:Header> 
+
+  
+
+  <!-- Body me actual charge request --> 
+
+  <soap:Body> 
+
+    <tns:chargeRequest> 
+
+      <orderId>ORD-78945</orderId> 
+
+      <amount>450.00</amount> 
+
+      <currency>INR</currency> 
+
+      <cardNumber>4111111111111111</cardNumber> 
+
+      <expiryDate>12/28</expiryDate> 
+
+      <cvv>123</cvv> 
+
+    </tns:chargeRequest> 
+
+  </soap:Body> 
+
+  
+
+</soap:Envelope> 

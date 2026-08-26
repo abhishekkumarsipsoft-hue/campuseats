@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+
+<definitions name="PaySecureService" 
+
+             targetNamespace="http://paysecure.example.com/ws" 
+
+             xmlns="http://schemas.xmlsoap.org/wsdl/" 
+
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+
+             xmlns:tns="http://paysecure.example.com/ws" 
+
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"> 
+
+  
+
+  <!-- 1. types --> 
+
+  <types> 
+
+    <xsd:schema targetNamespace="http://paysecure.example.com/ws"> 
+
+  
+
+      <!-- Request Element --> 
+
+      <xsd:element name="chargeRequest"> 
+
+        <xsd:complexType> 
+
+          <xsd:sequence> 
+
+            <xsd:element name="orderId" type="xsd:string"/> 
+
+            <xsd:element name="amount" type="xsd:decimal"/> 
+
+            <xsd:element name="currency" type="xsd:string"/> 
+
+            <xsd:element name="cardNumber" type="xsd:string"/> 
+
+            <xsd:element name="expiryDate" type="xsd:string"/> 
+
+            <xsd:element name="cvv" type="xsd:string"/> 
+
+          </xsd:sequence> 
+
+        </xsd:complexType> 
+
+      </xsd:element> 
+
+  
+
+      <!-- Response Element --> 
+
+      <xsd:element name="chargeResponse"> 
+
+        <xsd:complexType> 
+
+          <xsd:sequence> 
+
+            <xsd:element name="transactionId" type="xsd:string"/> 
+
+            <xsd:element name="status" type="xsd:string"/> 
+
+            <xsd:element name="message" type="xsd:string"/> 
+
+          </xsd:sequence> 
+
+        </xsd:complexType> 
+
+      </xsd:element> 
+
+  
+
+    </xsd:schema> 
+
+  </types> 
+
+  
+
+  <!-- 2. messages --> 
+
+  <message name="ChargeRequestMessage"> 
+
+    <part name="parameters" element="tns:chargeRequest"/> 
+
+  </message> 
+
+  
+
+  <message name="ChargeResponseMessage"> 
+
+    <part name="parameters" element="tns:chargeResponse"/> 
+
+  </message> 
+
+  
+
+  <!-- 3. portType --> 
+
+  <portType name="PaymentPortType"> 
+
+    <operation name="charge"> 
+
+      <input message="tns:ChargeRequestMessage"/> 
+
+      <output message="tns:ChargeResponseMessage"/> 
+
+    </operation> 
+
+  </portType> 
+
+  
+
+  <!-- 4. binding (SOAP over HTTP) --> 
+
+  <binding name="PaymentSoapBinding" type="tns:PaymentPortType"> 
+
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/> 
+
+    <operation name="charge"> 
+
+      <soap:operation soapAction="http://paysecure.example.com/ws/charge"/> 
+
+      <input> 
+
+        <soap:body use="literal"/> 
+
+      </input> 
+
+      <output> 
+
+        <soap:body use="literal"/> 
+
+      </output> 
+
+    </operation> 
+
+  </binding> 
+
+  
+
+  <!-- 5 & 6. service + port --> 
+
+  <service name="PaySecureService"> 
+
+    <port name="PaymentPort" binding="tns:PaymentSoapBinding"> 
+
+      <soap:address location="https://api.paysecure.example.com/soap/v1"/> 
+
+    </port> 
+
+  </service> 
+
+  
+
+</definitions> 
