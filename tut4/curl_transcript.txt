@@ -1,0 +1,119 @@
+############################################
+# 1. Successful create -> 201 + Location header
+############################################
+HTTP/1.1 201 CREATED
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/json
+Content-Length: 271
+Location: /orders/c4ed4779-c0c6-4132-81bc-9b4cc542e704
+Connection: close
+
+{"created_at":"2026-09-02T09:17:19.898411+00:00","customer_id":"student-42","id":"c4ed4779-c0c6-4132-81bc-9b4cc542e704","items":[{"name":"Masala Dosa","price_cents":8000,"qty":2},{"name":"Filter Coffee","price_cents":3000,"qty":1}],"status":"placed","total_cents":19000}
+-e 
+
+############################################
+# 2. Same request + same Idempotency-Key -> original order returned (no duplicate)
+############################################
+HTTP/1.1 201 CREATED
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/json
+Content-Length: 271
+Location: /orders/c4ed4779-c0c6-4132-81bc-9b4cc542e704
+Connection: close
+
+{"created_at":"2026-09-02T09:17:19.898411+00:00","customer_id":"student-42","id":"c4ed4779-c0c6-4132-81bc-9b4cc542e704","items":[{"name":"Masala Dosa","price_cents":8000,"qty":2},{"name":"Filter Coffee","price_cents":3000,"qty":1}],"status":"placed","total_cents":19000}
+-e 
+
+############################################
+# 3. Malformed body (empty items array) -> 400
+############################################
+HTTP/1.1 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/problem+json
+Content-Length: 146
+Connection: close
+
+{"detail":"items must be a non-empty array.","status":400,"title":"Malformed Order","type":"https://campuseats.example/problems/malformed-order"}
+-e 
+
+############################################
+# 4. GET the created order -> 200
+############################################
+HTTP/1.1 200 OK
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/json
+Content-Length: 271
+Connection: close
+
+{"created_at":"2026-09-02T09:17:19.898411+00:00","customer_id":"student-42","id":"c4ed4779-c0c6-4132-81bc-9b4cc542e704","items":[{"name":"Masala Dosa","price_cents":8000,"qty":2},{"name":"Filter Coffee","price_cents":3000,"qty":1}],"status":"placed","total_cents":19000}
+-e 
+
+############################################
+# 5. Missing resource -> 404
+############################################
+HTTP/1.1 404 NOT FOUND
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/problem+json
+Content-Length: 149
+Connection: close
+
+{"detail":"No order with id does-not-exist-id.","status":404,"title":"Order Not Found","type":"https://campuseats.example/problems/order-not-found"}
+-e 
+
+############################################
+# 6. Filtered list -> GET /orders?status=placed
+############################################
+HTTP/1.1 200 OK
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/json
+Content-Length: 273
+Connection: close
+
+[{"created_at":"2026-09-02T09:17:19.898411+00:00","customer_id":"student-42","id":"c4ed4779-c0c6-4132-81bc-9b4cc542e704","items":[{"name":"Masala Dosa","price_cents":8000,"qty":2},{"name":"Filter Coffee","price_cents":3000,"qty":1}],"status":"placed","total_cents":19000}]
+-e 
+
+############################################
+# 7. Cancel the order -> 202, refund succeeds against Payments stub
+############################################
+HTTP/1.1 202 ACCEPTED
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/json
+Content-Length: 156
+Connection: close
+
+{"order_id":"c4ed4779-c0c6-4132-81bc-9b4cc542e704","reason":"Changed my mind","refund_status":"refunded","requested_at":"2026-09-02T09:17:19.952291+00:00"}
+-e 
+
+############################################
+# 8. State conflict: cancel the same order again -> 409
+############################################
+HTTP/1.1 409 CONFLICT
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:19 GMT
+Content-Type: application/problem+json
+Content-Length: 168
+Connection: close
+
+{"detail":"This order has already been cancelled.","status":409,"title":"Order Already Cancelled","type":"https://campuseats.example/problems/order-already-cancelled"}
+-e 
+
+############################################
+# 9. Domain refusal: cancelling an order past the cancellable window -> 422
+############################################
+HTTP/1.1 202 ACCEPTED
+Server: Werkzeug/3.1.8 Python/3.12.3
+Date: Wed, 02 Sep 2026 09:17:20 GMT
+Content-Type: application/json
+Content-Length: 143
+Connection: close
+
+{"order_id":"637548c4-43a0-4247-a006-1fa41e0e3f29","reason":null,"refund_status":"refunded","requested_at":"2026-09-02T09:17:20.271660+00:00"}
+-e 
+

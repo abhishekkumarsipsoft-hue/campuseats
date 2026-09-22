@@ -1,0 +1,232 @@
+openapi: 3.0.3
+info:
+  title: CampusEats Orders Service
+  description: >
+    Manages the lifecycle of a food order placed against the CampusEats
+    catalogue, from placement through preparation, delivery and
+    cancellation. Built for CS543 Assignment 4.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /orders:
+    post:
+      operationId: createOrder
+      summary: Place a new order
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+          description: >
+            If supplied, a repeat request with the same key returns the
+            original order instead of creating a duplicate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+      responses:
+        '201':
+          description: Order created (or the original order, if this Idempotency-Key was seen before)
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the newly created order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Malformed request body
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    get:
+      operationId: listOrders
+      summary: List orders, optionally filtered by status
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+      responses:
+        '200':
+          description: Matching orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  /orders/{orderId}:
+    get:
+      operationId: getOrder
+      summary: Read a single order
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: The order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: No order with that id
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /orders/{orderId}/cancellation:
+    post:
+      operationId: cancelOrder
+      summary: Request cancellation of an order (sub-resource)
+      description: >
+        Creates a cancellation record for the order and triggers a refund
+        call to the Payments service. Accepted immediately; the refund
+        may still be settling when the response is returned.
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancellationRequest'
+      responses:
+        '202':
+          description: Cancellation accepted; refund processing (may still be pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cancellation'
+        '404':
+          description: No order with that id
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Order has already been cancelled
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Order is past the point where the domain allows cancellation, or Payments rejected the refund
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+components:
+  parameters:
+    OrderId:
+      in: path
+      name: orderId
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    OrderStatus:
+      type: string
+      enum: [placed, preparing, out_for_delivery, delivered, cancelling, cancelled]
+
+    OrderItem:
+      type: object
+      required: [name, price_cents, qty]
+      properties:
+        name:
+          type: string
+        price_cents:
+          type: integer
+          minimum: 0
+        qty:
+          type: integer
+          minimum: 1
+
+    OrderCreateRequest:
+      type: object
+      required: [customer_id, items]
+      properties:
+        customer_id:
+          type: string
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderItem'
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        total_cents:
+          type: integer
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        created_at:
+          type: string
+          format: date-time
+
+    CancellationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    Cancellation:
+      type: object
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          nullable: true
+        requested_at:
+          type: string
+          format: date-time
+        refund_status:
+          type: string
+          enum: [pending, refunded, failed, failed_pending_retry]
+
+    Problem:
+      type: object
+      description: RFC 7807-style problem body used by every failure response.
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
