@@ -1,0 +1,315 @@
+############################################
+# 1. Successful create -> 201 CREATED + Location
+############################################
+$ curl -v -X POST http://localhost:8000/orders -H "Content-Type: application/json" -H "Authorization: Bearer test-token-123" -H "Idempotency-Key: key-abc-1" -d "{\"customer_id\":\"student-42\",\"items\":[{\"name\":\"Masala Dosa\",\"price_cents\":8000,\"qty\":2}]}"
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51915
+* using HTTP/1.x
+> POST /orders HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+> Content-Type: application/json
+> Authorization: Bearer test-token-123
+> Idempotency-Key: key-abc-1
+> Content-Length: 88
+>
+* upload completely sent off: 88 bytes
+< HTTP/1.1 201 CREATED
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:31:11 GMT
+< Content-Type: application/json
+< Content-Length: 219
+< Location: /orders/9a4103a2-6129-41c8-9610-cf842e38e2ce
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 99
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+{"created_at":"2026-09-22T16:31:11.085224+00:00","customer_id":"student-42","id":"9a4103a2-6129-41c8-9610-cf842e38e2ce","items":[{"name":"Masala Dosa","price_cents":8000,"qty":2}],"status":"placed","total_cents":16000}
+* shutting down connection #0
+
+
+############################################
+# 2. Same request + same Idempotency-Key -> original order returned (no duplicate)
+############################################
+$ curl -v -X POST http://localhost:8000/orders -H "Content-Type: application/json" -H "Authorization: Bearer test-token-123" -H "Idempotency-Key: key-abc-1" -d "{\"customer_id\":\"student-42\",\"items\":[{\"name\":\"Masala Dosa\",\"price_cents\":8000,\"qty\":2}]}"
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51918
+* using HTTP/1.x
+> POST /orders HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+> Content-Type: application/json
+> Authorization: Bearer test-token-123
+> Idempotency-Key: key-abc-1
+> Content-Length: 88
+>
+* upload completely sent off: 88 bytes
+< HTTP/1.1 201 CREATED
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:31:34 GMT
+< Content-Type: application/json
+< Content-Length: 219
+< Location: /orders/9a4103a2-6129-41c8-9610-cf842e38e2ce
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 98
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+{"created_at":"2026-09-22T16:31:11.085224+00:00","customer_id":"student-42","id":"9a4103a2-6129-41c8-9610-cf842e38e2ce","items":[{"name":"Masala Dosa","price_cents":8000,"qty":2}],"status":"placed","total_cents":16000}
+* shutting down connection #0
+
+# Note: same "id" and same "created_at" as request #1 -> Idempotency-Key
+# prevented a duplicate order from being created (Assignment 4, C7).
+
+
+############################################
+# 3. GET the created order -> 200 OK, capture ETag
+############################################
+$ curl -v http://localhost:8000/orders/9a4103a2-6129-41c8-9610-cf842e38e2ce
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51934
+* using HTTP/1.x
+> GET /orders/9a4103a2-6129-41c8-9610-cf842e38e2ce HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:31:54 GMT
+< Content-Type: application/json
+< Content-Length: 219
+< ETag: W/"38b5eb7984c8d31a"
+< Cache-Control: private, must-revalidate
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 99
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+{"created_at":"2026-09-22T16:31:11.085224+00:00","customer_id":"student-42","id":"9a4103a2-6129-41c8-9610-cf842e38e2ce","items":[{"name":"Masala Dosa","price_cents":8000,"qty":2}],"status":"placed","total_cents":16000}
+* shutting down connection #0
+
+
+############################################
+# 4. Conditional GET with matching If-None-Match -> 304 NOT MODIFIED
+############################################
+$ curl -v http://localhost:8000/orders/9a4103a2-6129-41c8-9610-cf842e38e2ce -H "If-None-Match: W/\"38b5eb7984c8d31a\""
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51936
+* using HTTP/1.x
+> GET /orders/9a4103a2-6129-41c8-9610-cf842e38e2ce HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+> If-None-Match: W/"38b5eb7984c8d31a"
+>
+* Request completely sent off
+< HTTP/1.1 304 NOT MODIFIED
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:32:11 GMT
+< ETag: W/"38b5eb7984c8d31a"
+< Cache-Control: private, must-revalidate
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 98
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+* shutting down connection #0
+
+# Note: no body returned - client's cached copy is still current (C1).
+
+
+############################################
+# 5. Conditional write with stale If-Match -> 412 PRECONDITION FAILED
+############################################
+$ curl -v -X POST http://localhost:8000/orders/9a4103a2-6129-41c8-9610-cf842e38e2ce/cancellation -H "Content-Type: application/json" -H "Authorization: Bearer test-token-123" -H "If-Match: W/\"wrong-etag-value\"" -d "{\"reason\":\"test\"}"
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51943
+* using HTTP/1.x
+> POST /orders/9a4103a2-6129-41c8-9610-cf842e38e2ce/cancellation HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+> Content-Type: application/json
+> Authorization: Bearer test-token-123
+> If-Match: W/"wrong-etag-value"
+> Content-Length: 17
+>
+* upload completely sent off: 17 bytes
+< HTTP/1.1 412 PRECONDITION FAILED
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:32:28 GMT
+< Content-Type: application/problem+json
+< Content-Length: 187
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 99
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+{"detail":"The order has changed since you last read it. Re-fetch and retry.","status":412,"title":"Precondition Failed","type":"https://campuseats.example/problems/precondition-failed"}
+* shutting down connection #0
+
+# Note: the stale/incorrect ETag prevented the write from being applied (C2).
+# This stops two editors from clobbering each other's changes.
+
+
+############################################
+# 6. Malformed body (empty items array) -> 400 BAD REQUEST
+############################################
+$ curl -v -X POST http://localhost:8000/orders -H "Content-Type: application/json" -H "Authorization: Bearer test-token-123" -d "{\"customer_id\":\"student-42\",\"items\":[]}"
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51945
+* using HTTP/1.x
+> POST /orders HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+> Content-Type: application/json
+> Authorization: Bearer test-token-123
+> Content-Length: 39
+>
+* upload completely sent off: 39 bytes
+< HTTP/1.1 400 BAD REQUEST
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:32:42 GMT
+< Content-Type: application/problem+json
+< Content-Length: 146
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 98
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+{"detail":"items must be a non-empty array.","status":400,"title":"Malformed Order","type":"https://campuseats.example/problems/malformed-order"}
+* shutting down connection #0
+
+
+############################################
+# 7. Unknown resource -> 404 NOT FOUND
+############################################
+$ curl -v http://localhost:8000/orders/does-not-exist-id
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51951
+* using HTTP/1.x
+> GET /orders/does-not-exist-id HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 404 NOT FOUND
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:32:57 GMT
+< Content-Type: application/problem+json
+< Content-Length: 149
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 99
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+{"detail":"No order with id does-not-exist-id.","status":404,"title":"Order Not Found","type":"https://campuseats.example/problems/order-not-found"}
+* shutting down connection #0
+
+
+############################################
+# 8. Missing Authorization header -> 401 UNAUTHORIZED
+############################################
+$ curl -v -X POST http://localhost:8000/orders -H "Content-Type: application/json" -d "{\"customer_id\":\"student-42\",\"items\":[{\"name\":\"Idli\",\"price_cents\":3000,\"qty\":1}]}"
+
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+*   Trying 127.0.0.1:8000...
+* Established connection to localhost (127.0.0.1 port 8000) from 127.0.0.1 port 51953
+* using HTTP/1.x
+> POST /orders HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.21.0
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 81
+>
+* upload completely sent off: 81 bytes
+< HTTP/1.1 401 UNAUTHORIZED
+< Server: Werkzeug/3.1.8 Python/3.10.6
+< Date: Tue, 22 Sep 2026 16:33:15 GMT
+< Content-Type: application/problem+json
+< Content-Length: 141
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 98
+< Access-Control-Allow-Origin: *
+< Access-Control-Allow-Methods: GET, POST, OPTIONS
+< Access-Control-Allow-Headers: Content-Type, Authorization, Idempotency-Key, If-Match, If-None-Match, X-HTTP-Method-Override
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=63072000; includeSubDomains
+< Connection: close
+<
+{"detail":"A valid Bearer token is required.","status":401,"title":"Unauthorized","type":"https://campuseats.example/problems/unauthorized"}
+* shutting down connection #0

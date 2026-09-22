@@ -1,0 +1,13 @@
+=== pytest ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/claude/campuseats-orders/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/claude/campuseats-orders
+collecting ... collected 4 items
+
+tests/test_orders.py::test_create_order_succeeds_with_right_code_and_location PASSED [ 25%]
+tests/test_orders.py::test_idempotent_repeat_returns_original PASSED     [ 50%]
+tests/test_orders.py::test_malformed_body_returns_400_with_problem_shape PASSED [ 75%]
+tests/test_orders.py::test_unknown_id_returns_404 PASSED                 [100%]
+
+============================== 4 passed in 0.14s ===============================
