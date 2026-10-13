@@ -1,0 +1,498 @@
+openapi: 3.0.3
+info:
+  title: CampusEats Orders Service
+  description: >
+    Manages the lifecycle of a food order placed against the CampusEats
+    catalogue, from placement through preparation, delivery and cancellation.
+    Built for CS543 Assignments 4-6.
+
+
+    **Errors.** Every failure - from every endpoint, including unknown URLs and
+    unexpected server faults - is an RFC 7807 Problem Details object with
+    `Content-Type: application/problem+json; charset=utf-8`. The `type` value
+    is one of a fixed catalogue (see the `ProblemType` schema) and is stable:
+    clients may switch on it.
+
+
+    **Retry safety.** Retry only transient failures: `429`, `503` (honour
+    `Retry-After`), and connection errors/timeouts. Never retry any other 4xx
+    unchanged - the request itself has to change. Retrying `POST /orders` is
+    safe only with an `Idempotency-Key`.
+
+
+    **Formats.** Success bodies are `application/json` by default and
+    `application/xml` when asked for with `Accept`; `406` if neither is acceptable.
+  version: 1.2.0
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: orders
+
+paths:
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Place a new order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Accept'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+      responses:
+        '201':
+          description: Order created (or the original order, if this Idempotency-Key was seen before with the same body)
+          headers:
+            Location:
+              schema: {type: string}
+              description: URL of the new order, e.g. /orders/{id}
+            X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+            X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Order'}
+            application/xml:
+              schema: {$ref: '#/components/schemas/Order'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '406': {$ref: '#/components/responses/NotAcceptable'}
+        '422':
+          description: >
+            Well-formed JSON that fails validation. `type` is `empty-cart`
+            (items is []), `item-unavailable` (a line names an item the
+            catalogue cannot supply) or `validation-error` (anything else).
+            Field-level failures are listed in `errors[]`, all at once.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/ValidationProblem'}
+              examples:
+                twoBadFields:
+                  summary: Two bad fields reported in one response
+                  value:
+                    type: https://campuseats.example/problems/validation-error
+                    title: Validation Failed
+                    status: 422
+                    detail: 2 fields failed validation. See errors[].
+                    errors:
+                      - {field: address, message: is required and must be a non-empty string}
+                      - {field: 'items[0].qty', message: must be an integer >= 1}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+        '500': {$ref: '#/components/responses/InternalError'}
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders, optionally filtered by status
+      security: []
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema: {$ref: '#/components/schemas/OrderStatus'}
+        - $ref: '#/components/parameters/Accept'
+      responses:
+        '200':
+          description: Matching orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Order'}
+            application/xml:
+              schema:
+                type: array
+                xml: {name: orders, wrapped: true}
+                items: {$ref: '#/components/schemas/Order'}
+        '406': {$ref: '#/components/responses/NotAcceptable'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+        '500': {$ref: '#/components/responses/InternalError'}
+
+  /orders/{orderId}:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Read a single order
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Accept'
+        - in: header
+          name: If-None-Match
+          required: false
+          schema: {type: string}
+          description: Return 304 if the resource's current ETag matches this value.
+      responses:
+        '200':
+          description: The order
+          headers:
+            ETag: {schema: {type: string}}
+            Cache-Control: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Order'}
+            application/xml:
+              schema: {$ref: '#/components/schemas/Order'}
+        '304':
+          description: Not Modified - the client's cached copy is still current. No body.
+          headers:
+            ETag: {schema: {type: string}}
+        '404': {$ref: '#/components/responses/OrderNotFound'}
+        '406': {$ref: '#/components/responses/NotAcceptable'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+        '500': {$ref: '#/components/responses/InternalError'}
+    patch:
+      operationId: updateOrder
+      tags: [orders]
+      summary: Move an order forward through its lifecycle
+      description: >
+        Only `status` may be sent. Allowed moves: placed -> preparing ->
+        out_for_delivery -> delivered. Cancelling is not a PATCH: use
+        DELETE /orders/{orderId} or POST /orders/{orderId}/cancellation.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Accept'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OrderPatchRequest'}
+      responses:
+        '200':
+          description: The order after the transition
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Order'}
+            application/xml:
+              schema: {$ref: '#/components/schemas/Order'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/OrderNotFound'}
+        '406': {$ref: '#/components/responses/NotAcceptable'}
+        '409': {$ref: '#/components/responses/IllegalTransition'}
+        '422': {$ref: '#/components/responses/ValidationFailed'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+        '500': {$ref: '#/components/responses/InternalError'}
+    delete:
+      operationId: deleteOrder
+      tags: [orders]
+      summary: Cancel an order and refund it
+      description: >
+        Same effect as POST /orders/{orderId}/cancellation without a reason,
+        but answers 204 with no body. The order is only marked cancelled once
+        the refund succeeded; on any refund failure it is left exactly as it was.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Accept'
+      responses:
+        '204':
+          description: Cancelled and refunded. No body.
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '402': {$ref: '#/components/responses/PaymentDeclined'}
+        '404': {$ref: '#/components/responses/OrderNotFound'}
+        '406': {$ref: '#/components/responses/NotAcceptable'}
+        '409': {$ref: '#/components/responses/IllegalTransition'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+        '500': {$ref: '#/components/responses/InternalError'}
+        '503': {$ref: '#/components/responses/PaymentsUnavailable'}
+    options:
+      operationId: orderOptions
+      tags: [orders]
+      summary: Discover supported methods on this resource
+      security: []
+      responses:
+        '204':
+          description: No content; see Allow header
+          headers:
+            Allow:
+              schema: {type: string}
+              description: GET, PATCH, DELETE, OPTIONS
+
+  /orders/{orderId}/cancellation:
+    post:
+      operationId: cancelOrder
+      tags: [orders]
+      summary: Request cancellation of an order (sub-resource)
+      description: >
+        Creates a cancellation record and refunds through the Payments service.
+        The refund is attempted before this responds, so `refund_status` is
+        `refunded` on a 202; if the refund cannot be completed the response is
+        an error (402 or 503), never a 2xx.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - $ref: '#/components/parameters/Accept'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CancellationRequest'}
+      responses:
+        '202':
+          description: Cancellation accepted and refunded
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Cancellation'}
+            application/xml:
+              schema: {$ref: '#/components/schemas/Cancellation'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '402': {$ref: '#/components/responses/PaymentDeclined'}
+        '404': {$ref: '#/components/responses/OrderNotFound'}
+        '406': {$ref: '#/components/responses/NotAcceptable'}
+        '409': {$ref: '#/components/responses/IllegalTransition'}
+        '412': {$ref: '#/components/responses/PreconditionFailed'}
+        '429': {$ref: '#/components/responses/TooManyRequests'}
+        '500': {$ref: '#/components/responses/InternalError'}
+        '503': {$ref: '#/components/responses/PaymentsUnavailable'}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Header handling only - no real token verification.
+
+  parameters:
+    OrderId:
+      in: path
+      name: orderId
+      required: true
+      schema: {type: string, format: uuid}
+    Accept:
+      in: header
+      name: Accept
+      required: false
+      schema:
+        type: string
+        default: application/json
+      description: application/json (default) or application/xml. Anything else is 406.
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema: {type: string}
+      description: >
+        If supplied, a repeat request with the same key returns the original
+        result instead of creating a duplicate.
+    IfMatch:
+      in: header
+      name: If-Match
+      required: false
+      schema: {type: string}
+      description: Reject the write with 412 if the order's current ETag does not match (used on cancellation).
+
+  headers:
+    RateLimitLimit:
+      schema: {type: integer}
+    RateLimitRemaining:
+      schema: {type: integer}
+    RetryAfter:
+      schema: {type: integer}
+      description: Seconds to wait before retrying.
+
+  responses:
+    BadRequest:
+      description: >
+        Body missing, not valid JSON, or not a JSON object. `type` is
+        `malformed-json` (or `bad-request` for other protocol-level faults).
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    Unauthorized:
+      description: Missing or invalid Bearer token (`unauthorized`).
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    PaymentDeclined:
+      description: The Payments service definitively refused the refund (`payment-declined`). The order is unchanged. Do not retry unchanged.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    OrderNotFound:
+      description: No order with that id (`order-not-found`).
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    NotAcceptable:
+      description: The client cannot accept application/json or application/xml (`not-acceptable`).
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    IllegalTransition:
+      description: >
+        The order's current status does not allow this action
+        (`illegal-transition`) - e.g. skipping a lifecycle step, or cancelling
+        an order that is out for delivery, delivered, already cancelled, or
+        mid-cancellation. A state conflict: re-read the order before trying again.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    PreconditionFailed:
+      description: If-Match did not match the order's current ETag (`precondition-failed`).
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    ValidationFailed:
+      description: One or more fields are invalid (`validation-error`); every bad field is listed in `errors[]`.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ValidationProblem'}
+    TooManyRequests:
+      description: Rate limit exceeded (`rate-limit-exceeded`). Retry after the delay in Retry-After.
+      headers:
+        Retry-After: {$ref: '#/components/headers/RetryAfter'}
+        X-RateLimit-Limit: {$ref: '#/components/headers/RateLimitLimit'}
+        X-RateLimit-Remaining: {$ref: '#/components/headers/RateLimitRemaining'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    InternalError:
+      description: >
+        Unexpected server fault (`internal-error`). The body carries only a
+        support reference; details are in the server log.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+    PaymentsUnavailable:
+      description: >
+        The Payments service could not be reached after retries
+        (`payments-unavailable`). The order is unchanged and the same request
+        is safe to retry after Retry-After.
+      headers:
+        Retry-After: {$ref: '#/components/headers/RetryAfter'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+
+  schemas:
+    OrderStatus:
+      type: string
+      enum: [placed, preparing, out_for_delivery, delivered, cancelling, cancelled]
+
+    OrderItem:
+      type: object
+      required: [name, price_cents, qty]
+      properties:
+        name: {type: string, minLength: 1}
+        price_cents: {type: integer, minimum: 0}
+        qty: {type: integer, minimum: 1}
+
+    OrderCreateRequest:
+      type: object
+      required: [customer_id, address, items]
+      properties:
+        customer_id: {type: string, minLength: 1}
+        address: {type: string, minLength: 1}
+        items:
+          type: array
+          minItems: 1
+          items: {$ref: '#/components/schemas/OrderItem'}
+
+    OrderPatchRequest:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status: {$ref: '#/components/schemas/OrderStatus'}
+
+    Order:
+      type: object
+      xml: {name: order}
+      properties:
+        id: {type: string, format: uuid}
+        customer_id: {type: string}
+        address: {type: string}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/OrderItem'}
+        total_cents: {type: integer}
+        status: {$ref: '#/components/schemas/OrderStatus'}
+        created_at: {type: string, format: date-time}
+
+    CancellationRequest:
+      type: object
+      properties:
+        reason: {type: string, maxLength: 500}
+
+    Cancellation:
+      type: object
+      xml: {name: cancellation}
+      properties:
+        order_id: {type: string, format: uuid}
+        reason: {type: string, nullable: true}
+        requested_at: {type: string, format: date-time}
+        refund_status: {type: string, enum: [pending, refunded]}
+
+    ProblemType:
+      type: string
+      format: uri
+      description: >
+        One of https://campuseats.example/problems/ + empty-cart |
+        item-unavailable | payment-declined | order-not-found |
+        illegal-transition | validation-error |
+        bad-request | malformed-json | unauthorized | not-found |
+        method-not-allowed | not-acceptable | precondition-failed |
+        rate-limit-exceeded | internal-error |
+        payments-unavailable
+      enum:
+        - https://campuseats.example/problems/empty-cart
+        - https://campuseats.example/problems/item-unavailable
+        - https://campuseats.example/problems/payment-declined
+        - https://campuseats.example/problems/order-not-found
+        - https://campuseats.example/problems/illegal-transition
+        - https://campuseats.example/problems/validation-error
+        - https://campuseats.example/problems/bad-request
+        - https://campuseats.example/problems/malformed-json
+        - https://campuseats.example/problems/unauthorized
+        - https://campuseats.example/problems/not-found
+        - https://campuseats.example/problems/method-not-allowed
+        - https://campuseats.example/problems/not-acceptable
+        - https://campuseats.example/problems/precondition-failed
+        - https://campuseats.example/problems/rate-limit-exceeded
+        - https://campuseats.example/problems/internal-error
+        - https://campuseats.example/problems/payments-unavailable
+
+    Problem:
+      type: object
+      description: RFC 7807 Problem Details, used by every failure response.
+      required: [type, title, status, detail]
+      properties:
+        type: {$ref: '#/components/schemas/ProblemType'}
+        title: {type: string, description: 'Short human-readable summary; same for every occurrence of this type.'}
+        status: {type: integer, description: 'The HTTP status code, repeated in the body.'}
+        detail: {type: string, description: Explanation specific to this occurrence.}
+
+    FieldError:
+      type: object
+      required: [field, message]
+      properties:
+        field: {type: string, description: 'Path of the bad field, e.g. items[0].qty'}
+        message: {type: string, description: Why it is bad.}
+
+    ValidationProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              minItems: 1
+              items: {$ref: '#/components/schemas/FieldError'}
