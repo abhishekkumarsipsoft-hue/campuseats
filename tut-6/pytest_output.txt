@@ -1,0 +1,58 @@
+=== pytest ===
+============================= test session starts ==============================
+platform linux -- Python 3.13.16, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/claude/assignment6
+plugins: anyio-4.15.1
+collecting ... collected 48 items
+
+tests/test_orders.py::test_create_order_201_with_location PASSED         [  2%]
+tests/test_orders.py::test_unauthenticated_401 PASSED                    [  4%]
+tests/test_orders.py::test_unknown_id_404_order_not_found PASSED         [  6%]
+tests/test_orders.py::test_unknown_route_is_problem_json_not_html PASSED [  8%]
+tests/test_orders.py::test_wrong_method_405_problem_with_allow PASSED    [ 10%]
+tests/test_orders.py::test_idempotent_repeat_returns_original PASSED     [ 12%]
+tests/test_orders.py::test_conditional_get_304 PASSED                    [ 14%]
+tests/test_orders.py::test_stale_if_match_412 PASSED                     [ 16%]
+tests/test_orders.py::test_if_match_with_current_etag_allows_the_write PASSED [ 18%]
+tests/test_orders.py::test_empty_cart_422_empty_cart PASSED              [ 20%]
+tests/test_orders.py::test_two_bad_fields_reported_at_once PASSED        [ 22%]
+tests/test_orders.py::test_every_error_is_collected_not_just_the_first PASSED [ 25%]
+tests/test_orders.py::test_booleans_are_not_integers[qty] PASSED         [ 27%]
+tests/test_orders.py::test_booleans_are_not_integers[price_cents] PASSED [ 29%]
+tests/test_orders.py::test_address_is_required PASSED                    [ 31%]
+tests/test_orders.py::test_invalid_work_is_not_done PASSED               [ 33%]
+tests/test_orders.py::test_item_unavailable_422 PASSED                   [ 35%]
+tests/test_orders.py::test_malformed_json_400 PASSED                     [ 37%]
+tests/test_orders.py::test_json_but_not_an_object_400 PASSED             [ 39%]
+tests/test_orders.py::test_body_that_is_not_json_400 PASSED              [ 41%]
+tests/test_orders.py::test_list_filters_by_status PASSED                 [ 43%]
+tests/test_orders.py::test_patch_walks_the_lifecycle PASSED              [ 45%]
+tests/test_orders.py::test_patch_skipping_a_step_is_illegal_transition PASSED [ 47%]
+tests/test_orders.py::test_patch_cannot_cancel PASSED                    [ 50%]
+tests/test_orders.py::test_patch_with_unknown_status_is_422 PASSED       [ 52%]
+tests/test_orders.py::test_patch_requires_auth_and_existing_order PASSED [ 54%]
+tests/test_orders.py::test_delete_cancels_with_204 PASSED                [ 56%]
+tests/test_orders.py::test_delete_twice_is_illegal_transition PASSED     [ 58%]
+tests/test_orders.py::test_delete_past_the_cancellable_window_is_illegal_transition[out_for_delivery] PASSED [ 60%]
+tests/test_orders.py::test_delete_past_the_cancellable_window_is_illegal_transition[delivered] PASSED [ 62%]
+tests/test_orders.py::test_cancellation_subresource_202 PASSED           [ 64%]
+tests/test_orders.py::test_refund_declined_402_and_order_is_unchanged PASSED [ 66%]
+tests/test_orders.py::test_payments_down_503_with_retry_after_then_retry_works PASSED [ 68%]
+tests/test_orders.py::test_unexpected_exception_is_mapped_to_clean_500 PASSED [ 70%]
+tests/test_orders.py::test_default_is_json PASSED                        [ 72%]
+tests/test_orders.py::test_accept_xml_returns_xml PASSED                 [ 75%]
+tests/test_orders.py::test_xml_list PASSED                               [ 77%]
+tests/test_orders.py::test_unacceptable_accept_406 PASSED                [ 79%]
+tests/test_orders.py::test_accept_q_values[*/*-application/json] PASSED  [ 81%]
+tests/test_orders.py::test_accept_q_values[application/*-application/json] PASSED [ 83%]
+tests/test_orders.py::test_accept_q_values[application/json-application/json] PASSED [ 85%]
+tests/test_orders.py::test_accept_q_values[application/xml;q=0.9, application/json;q=0.5-application/xml] PASSED [ 87%]
+tests/test_orders.py::test_accept_q_values[text/html, application/xml;q=0.8-application/xml] PASSED [ 89%]
+tests/test_orders.py::test_accept_q_values[application/json;q=0, application/xml-application/xml] PASSED [ 91%]
+tests/test_orders.py::test_json_explicitly_refused_and_nothing_else_acceptable_is_406 PASSED [ 93%]
+tests/test_orders.py::test_every_response_labels_its_body_with_charset PASSED [ 95%]
+tests/test_orders.py::test_rate_limit_429_has_retry_after PASSED         [ 97%]
+tests/test_orders.py::test_no_failure_is_ever_a_200 PASSED               [100%]
+
+============================== 48 passed in 0.11s ==============================
